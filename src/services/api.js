@@ -9,7 +9,7 @@ const api = axios.create({
   },
 });
 
-// Add a response interceptor to handle errors globally
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
