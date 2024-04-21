@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 
 const CreateTutorial = () => {
@@ -15,8 +15,7 @@ const CreateTutorial = () => {
       const response = await api.post('/tutorials', tutorialData);
       console.log(response.data);
 
-
-      navigate('/get-tutorial'); 
+      navigate('/get-tutorial');
     } catch (error) {
       console.error('Error creating tutorial:', error);
     }
@@ -30,47 +29,38 @@ const CreateTutorial = () => {
   };
 
   return (
-    <div>
-      <h2>Create Tutorial</h2>
+    <div className="max-w-md mx-auto">
+      <h2 className="text-2xl font-bold mb-4">Create Tutorial</h2>
       <form>
-        <label>
-          Title:
+        <div className="mb-4">
+          <label className="block mb-2">Title:</label>
           <input
             type="text"
             name="title"
             value={tutorialData.title}
             onChange={handleChange}
+            className="w-full p-2 border rounded-md"
           />
-        </label>
-        <br />
-        <label>
-          Description:
+        </div>
+        <div className="mb-4">
+          <label className="block mb-2">Description:</label>
           <textarea
             name="description"
             value={tutorialData.description}
             onChange={handleChange}
+            className="w-full p-2 border rounded-md"
           />
-        </label>
-        <br />
-        <button type="button" onClick={handleCreateTutorial}>
+        </div>
+        <button
+          type="button"
+          onClick={handleCreateTutorial}
+          className="bg-blue-500 text-white p-2 rounded-md"
+        >
           Create Tutorial
         </button>
       </form>
-
-    
-      {/* <Link to="/get-tutorial">Go to Get Tutorial</Link> */}
-
-      <Routes>
-        <Route path="/get-tutorial" element={<GetTutorial />} />
-      </Routes>
     </div>
   );
 };
 
 export default CreateTutorial;
-
-
-const GetTutorial = () => {
-  
-  return <div>GetTutorial component content</div>;
-};

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 
 const CreateMotivationalTip = () => {
@@ -12,11 +12,10 @@ const CreateMotivationalTip = () => {
 
   const handleCreateMotivationalTip = async () => {
     try {
-      const response = await api.post('/motivational-tips', motivationalTipData);
+      const response = await api.post('/motitips', motivationalTipData); // Corrected endpoint to '/motitips'
       console.log(response.data);
 
-      
-      navigate('/get-motivational-tip'); 
+      navigate('/get-motivational-tip');
     } catch (error) {
       console.error('Error creating motivational tip:', error);
     }
@@ -30,48 +29,38 @@ const CreateMotivationalTip = () => {
   };
 
   return (
-    <div>
-      <h2>Create Motivational Tip</h2>
+    <div className="max-w-md mx-auto">
+      <h2 className="text-2xl font-bold mb-4">Create Motivational Tip</h2>
       <form>
-        <label>
-          Title:
+        <div className="mb-4">
+          <label className="block mb-2">Title:</label>
           <input
             type="text"
             name="title"
             value={motivationalTipData.title}
             onChange={handleChange}
+            className="w-full p-2 border rounded-md"
           />
-        </label>
-        <br />
-        <label>
-          Content:
+        </div>
+        <div className="mb-4">
+          <label className="block mb-2">Content:</label>
           <textarea
             name="content"
             value={motivationalTipData.content}
             onChange={handleChange}
+            className="w-full p-2 border rounded-md"
           />
-        </label>
-        <br />
-        <button type="button" onClick={handleCreateMotivationalTip}>
+        </div>
+        <button
+          type="button"
+          onClick={handleCreateMotivationalTip}
+          className="bg-blue-500 text-white p-2 rounded-md"
+        >
           Create Motivational Tip
         </button>
       </form>
-
-      
-      {/* <Link to="/get-motivational-tip">Go to Get Motivational Tip</Link> */}
-
-      
-      <Routes>
-        <Route path="/get-motivational-tip" element={<GetMotivationalTip />} />
-      </Routes>
     </div>
   );
 };
 
 export default CreateMotivationalTip;
-
-
-const GetMotivationalTip = () => {
- 
-  return <div>GetMotivationalTip component content</div>;
-};
