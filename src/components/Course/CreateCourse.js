@@ -1,58 +1,101 @@
-import React, { useState } from 'react';
-import api from '../../services/api';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const CreateCourse = () => {
-  const [courseData, setCourseData] = useState({
+  const [formData, setFormData] = useState({
     title: '',
+    image: '',
     description: '',
+    categoryId: ''
   });
+  const [categories, setCategories] = useState([]);
 
-  const handleCreateCourse = async () => {
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
     try {
-      const response = await api.post('/courses', courseData);
-      console.log(response.data);
+      const response = await axios.get('http://localhost:3002/category');
+      setCategories(response.data);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const courseData = {
+        title: formData.title,
+        image: formData.image,
+        description: formData.description,
+        category: formData.categoryId
+      };
+      const response = await axios.post('http://localhost:3002/course', courseData);
+      console.log('Course created successfully:', response.data);
+      setFormData({ title: '', image: '', description: '', categoryId: '' });
     } catch (error) {
       console.error('Error creating course:', error);
     }
   };
 
-  const handleChange = (e) => {
-    setCourseData({
-      ...courseData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
   return (
-    <div className="max-w-md mx-auto">
-      <h2 className="text-2xl font-bold mb-4">Create Course</h2>
-      <form>
-        <div className="mb-4">
-          <label className="block mb-2">Title:</label>
+    <div>
+      <h2 className="text-xl font-bold mb-4">Create Course</h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block">Title:</label>
           <input
             type="text"
             name="title"
-            value={courseData.title}
+            value={formData.title}
             onChange={handleChange}
-            className="w-full p-2 border rounded-md"
+            className="border border-gray-400 rounded-md p-2 w-full"
+            required
           />
         </div>
-        <div className="mb-4">
-          <label className="block mb-2">Description:</label>
+        <div>
+          <label className="block">Image URL:</label>
+          <input
+            type="text"
+            name="image"
+            value={formData.image}
+            onChange={handleChange}
+            className="border border-gray-400 rounded-md p-2 w-full"
+            required
+          />
+        </div>
+        <div>
+          <label className="block">Description:</label>
           <textarea
             name="description"
-            value={courseData.description}
+            value={formData.description}
             onChange={handleChange}
-            className="w-full p-2 border rounded-md"
+            className="border border-gray-400 rounded-md p-2 w-full"
+            required
           />
         </div>
-        <button
-          type="button"
-          onClick={handleCreateCourse}
-          className="bg-blue-500 text-white p-2 rounded-md"
-        >
-          Create Course
-        </button>
+        <div>
+          <label className="block">Category:</label>
+          <select
+            name="categoryId"
+            value={formData.categoryId}
+            onChange={handleChange}
+            className="border border-gray-400 rounded-md p-2 w-full"
+            required
+          >
+            <option value="">Select Category</option>
+            {categories.map(category => (
+              <option key={category.id} value={category.id}>{category.title}</option>
+            ))}
+          </select>
+        </div>
+        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md">Create Course</button>
       </form>
     </div>
   );

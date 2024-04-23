@@ -1,63 +1,100 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import api from '../../services/api';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const CreateTutorial = () => {
-  const navigate = useNavigate();
-
-  const [tutorialData, setTutorialData] = useState({
+  const [formData, setFormData] = useState({
     title: '',
-    description: '',
+    tuto_url: '',
+    categoryId: '' 
   });
+  const [categories, setCategories] = useState([]); 
+  const [error, setError] = useState(null);
 
-  const handleCreateTutorial = async () => {
+  useEffect(() => {
+    fetchCategories(); 
+  }, []);
+
+  const fetchCategories = async () => { 
     try {
-      const response = await api.post('/tutorials', tutorialData);
-      console.log(response.data);
-
-      navigate('/get-tutorial');
+      const response = await axios.get('http://localhost:3002/category'); 
+      setCategories(response.data);
     } catch (error) {
-      console.error('Error creating tutorial:', error);
+      console.error('Error fetching categories:', error); 
+      setError('Error fetching categories'); 
     }
   };
 
   const handleChange = (e) => {
-    setTutorialData({
-      ...tutorialData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post('http://localhost:3002/tutorial', formData);
+      console.log('Tutorial created successfully:', response.data);
+      setFormData({ title: '', tuto_url: '', categoryId: '' });
+    } catch (error) {
+      if (error.response) {
+        
+        console.error('Server Error:', error.response.data);
+        setError(error.response.data.message); 
+      } else if (error.request) {
+      
+        console.error('Network Error:', error.request);
+        setError('Network Error. Please try again later.');
+      } else {
+        
+        console.error('Error:', error.message);
+        setError('An error occurred. Please try again later.');
+      }
+    }
+  };
+  
+
   return (
-    <div className="max-w-md mx-auto">
-      <h2 className="text-2xl font-bold mb-4">Create Tutorial</h2>
-      <form>
-        <div className="mb-4">
-          <label className="block mb-2">Title:</label>
+    <div>
+      <h2 className="text-xl font-bold mb-4">Create Tutorial</h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block">Title:</label>
           <input
             type="text"
             name="title"
-            value={tutorialData.title}
+            value={formData.title}
             onChange={handleChange}
-            className="w-full p-2 border rounded-md"
+            className="border border-gray-400 rounded-md p-2 w-full"
+            required
           />
         </div>
-        <div className="mb-4">
-          <label className="block mb-2">Description:</label>
-          <textarea
-            name="description"
-            value={tutorialData.description}
+        <div>
+          <label className="block">Tutorial URL:</label>
+          <input
+            type="text"
+            name="tuto_url"
+            value={formData.tuto_url}
             onChange={handleChange}
-            className="w-full p-2 border rounded-md"
+            className="border border-gray-400 rounded-md p-2 w-full"
+            required
           />
         </div>
-        <button
-          type="button"
-          onClick={handleCreateTutorial}
-          className="bg-blue-500 text-white p-2 rounded-md"
-        >
-          Create Tutorial
-        </button>
+        <div>
+          <label className="block">Category:</label> {/* Changed from Course to Category */}
+          <select
+            name="categoryId" // Changed from courseId to categoryId to match the backend
+            value={formData.categoryId} // Changed from courseId to categoryId to match the backend
+            onChange={handleChange}
+            className="border border-gray-400 rounded-md p-2 w-full"
+            required
+          >
+            <option value="">Select Category</option>
+            {categories.map(category => (
+              <option key={category.id} value={category.id}>{category.title}</option> // Changed from course.id to category.id and course.title to category.title
+            ))}
+          </select>
+        </div>
+        {error && <div style={{ color: 'red' }}>{error}</div>}
+        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md">Create Tutorial</button>
       </form>
     </div>
   );

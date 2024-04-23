@@ -1,93 +1,95 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import api from '../../services/api';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const CreateCategory = () => {
-  const navigate = useNavigate();
-
-  const [categoryData, setCategoryData] = useState({
+  const [formData, setFormData] = useState({
     title: '',
+    imageId: '', 
     description: '',
-    image: '',
+    parentId: ''
   });
+  const [existingCategories, setExistingCategories] = useState([]);
 
-  const [showImageDropdown, setShowImageDropdown] = useState(false);
+  useEffect(() => {
+    fetchExistingCategories();
+  }, []);
 
-  const handleCreateCategory = async () => {
+  const fetchExistingCategories = async () => {
     try {
-      const response = await api.post('/categories', categoryData);
-      console.log(response.data);
-      navigate('/get-user');
+      const response = await axios.get('http://localhost:3002/category');
+      setExistingCategories(response.data);
+    } catch (error) {
+      console.error('Error fetching existing categories:', error);
+    }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post('http://localhost:3002/category', formData);
+      console.log('Category created successfully:', response.data);
+      setFormData({ title: '', imageId: '', description: '', parentId: '' }); // Reset imageId as well
     } catch (error) {
       console.error('Error creating category:', error);
     }
   };
 
-  const handleChange = (e) => {
-    setCategoryData({
-      ...categoryData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleImageChange = (e) => {
-    setCategoryData({
-      ...categoryData,
-      image: e.target.value,
-    });
-    setShowImageDropdown(false);
-  };
-
   return (
-    <div className="max-w-md mx-auto">
-      <h2 className="text-2xl font-bold mb-4">Create Category</h2>
-      <form>
-        <div className="mb-4">
-          <label className="block mb-2">Name:</label>
+    <div>
+      <h2 className="text-xl font-bold mb-4">Create Category</h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block">Title:</label>
           <input
             type="text"
             name="title"
-            value={categoryData.title}
+            value={formData.title}
             onChange={handleChange}
-            className="w-full p-2 border rounded-md"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block mb-2">Description:</label>
-          <textarea
-            name="description"
-            value={categoryData.description}
-            onChange={handleChange}
-            className="w-full p-2 border rounded-md"
+            className="border border-gray-400 rounded-md p-2 w-full"
+            required
           />
         </div>
         <div>
-          <button
-            type="button"
-            onClick={() => setShowImageDropdown(!showImageDropdown)}
-            className="bg-blue-500 text-white p-2 rounded-md mr-2"
-          >
-            Select Image
-          </button>
-          {showImageDropdown && (
-            <div>
-              <label className="block mb-2">Select Image:</label>
-              <select onChange={handleImageChange} className="w-full p-2 border rounded-md">
-                <option value="">Select an image</option>
-                <option value="Image 1">Image 1</option>
-                <option value="Image 2">Image 2</option>
-                <option value="Image 3">Image 3</option>
-              </select>
-            </div>
-          )}
+          <label className="block">Image ID:</label>
+          <input
+            type="text"
+            name="imageId"
+            value={formData.imageId}
+            onChange={handleChange}
+            className="border border-gray-400 rounded-md p-2 w-full"
+            required
+          />
         </div>
-        <button
-          type="button"
-          onClick={handleCreateCategory}
-          className="bg-green-500 text-white p-2 rounded-md mt-4"
-        >
-          Create Category
-        </button>
+        <div>
+          <label className="block">Description:</label>
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            className="border border-gray-400 rounded-md p-2 w-full"
+            required
+          ></textarea>
+        </div>
+        <div>
+          <label className="block">Parent Category:</label>
+          <select
+            name="parentId" // Changed from existingCategory to parentId to match the state
+            value={formData.parentId}
+            onChange={handleChange}
+            className="border border-gray-400 rounded-md p-2 w-full"
+          >
+            <option value="">Select Parent Category</option>
+            {existingCategories.map(category => (
+              <option key={category.id} value={category.id}>{category.title}</option>
+            ))}
+          </select>
+        </div>
+        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md">Create Category</button>
       </form>
     </div>
   );
