@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Modal, Button, Input, Select, Table, Pagination } from 'antd';
+import { FaEdit, FaTrash } from 'react-icons/fa';
+
+const { TextArea } = Input;
+const { Option } = Select;
 
 const CreateCategory = () => {
   const [formData, setFormData] = useState({
@@ -10,6 +15,9 @@ const CreateCategory = () => {
   });
   const [existingCategories, setExistingCategories] = useState([]);
   const [editingCategory, setEditingCategory] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(5);
 
   useEffect(() => {
     fetchExistingCategories();
@@ -29,8 +37,7 @@ const CreateCategory = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     try {
       if (editingCategory) {
         await axios.put(`http://localhost:3002/category/${editingCategory.id}`, formData);
@@ -41,6 +48,7 @@ const CreateCategory = () => {
       }
       setFormData({ title: '', image: '', description: '', parentId: '' });
       setEditingCategory(null);
+      setModalVisible(false);
       fetchExistingCategories();
     } catch (error) {
       console.error('Error:', error);
@@ -55,6 +63,7 @@ const CreateCategory = () => {
       parentId: category.parentId || ''
     });
     setEditingCategory(category);
+    setModalVisible(true);
   };
 
   const handleDelete = async (categoryId) => {
@@ -67,110 +76,133 @@ const CreateCategory = () => {
     }
   };
 
+  const handleCancel = () => {
+    setModalVisible(false);
+    setEditingCategory(null);
+    setFormData({ title: '', image: '', description: '', parentId: '' });
+  };
+
+  const handlePaginationChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const columns = [
+    {
+      title: 'Title',
+      dataIndex: 'title',
+      key: 'title',
+    },
+    {
+      title: 'Description',
+      dataIndex: 'description',
+      key: 'description',
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (_, category) => (
+        <div
+          style={{
+            display: 'flex',
+
+          }}
+        >
+          <Button type="link" icon={<FaEdit />} onClick={() => handleEdit(category)} />
+          <Button type="link" icon={<FaTrash />} danger onClick={() => handleDelete(category.id)} />
+        </div>
+      ),
+    },
+  ];
+
+  const paginatedCategories = existingCategories.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
     <div className="max-w-7xl mx-auto">
       <h2 className="text-xl font-bold mb-4">Create or Update Category</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="flex space-x-4">
-          <div className="flex-1">
-            <label className="block">Title:</label>
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
+      <Button type="primary" onClick={() => setModalVisible(true)}>
+        {editingCategory ? 'Edit Category' : 'Create Category'}
+      </Button>
+      <Modal
+        title={editingCategory ? 'Edit Category' : 'Create Category'}
+        visible={modalVisible}
+        onCancel={handleCancel}
+        onOk={handleSubmit}
+        okText={editingCategory ? 'Update' : 'Create'}
+      >
+        <form className="space-y-4">
+          <div className="flex space-x-4">
+            <div className="flex-1">
+              <label className="block">Title:</label>
+              <Input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block">Image:</label>
+              <Select
+                name="parentId"
+                value={formData.image}
+                onChange={(value) => setFormData({ ...formData, image: value})}
+                className="w-full"
+              >
+                <Option value="">Select image Name</Option>
+                <Option value="0">HEROKU</Option>
+                <Option value="1">HTML</Option>
+                <Option value="2">JAVASCRIPT</Option>
+                <Option value="3">MONGO</Option>
+                <Option value="4">MYSQL</Option>
+                <Option value="5">NEXT</Option>
+                <Option value="6">NODE</Option>
+                <Option value="7">PHP</Option>
+              </Select>
+            </div>
+          </div>
+          <div>
+            <label className="block">Description:</label>
+            <TextArea
+              name="description"
+              value={formData.description}
               onChange={handleChange}
-              className="border border-gray-400 rounded-md p-2 w-full"
-              required
+              maxLength={200}
+              rows={4}
             />
           </div>
-          <div className="flex-1">
-            <label className="block">Image ID:</label>
-            <input
-              type="text"
-              name="image"
-              value={formData.image}
-              onChange={handleChange}
-              className="border border-gray-400 rounded-md p-2 w-full"
-            />
-          </div>
-        </div>
-        <div>
-          <label className="block max-w-2xl">Description:</label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            className="border border-gray-400 rounded-md p-2 w-full max-w-2xl"
-            maxLength={200}
-            rows={4}
-          ></textarea>
-        </div>
-        <div>
-          <label className="block">Parent Category:</label>
-          <select
-            name="parentId"
-            value={formData.parentId}
-            onChange={handleChange}
-            className="border border-gray-400 rounded-md p-2 w-full"
-          >
-            <option value="">Select Parent Category</option>
-            {existingCategories.map(category => (
-              <option key={category.id} value={category.id}>{category.title}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md">
-            {editingCategory ? 'Update Category' : 'Create Category'}
-          </button>
-          {editingCategory && (
-            <button
-              type="button"
-              className="ml-2 text-red-500"
-              onClick={() => {
-                setEditingCategory(null);
-                setFormData({ title: '', image: '', description: '', parentId: '' });
-              }}
+          <div>
+            <label className="block">Parent Category:</label>
+            <Select
+              name="parentId"
+              value={formData.parentId}
+              onChange={(value) => setFormData({ ...formData, parentId: value })}
+              className="w-full"
             >
-              Cancel
-            </button>
-          )}
-        </div>
-      </form>
+              <Option value="">Select Parent Category</Option>
+              {existingCategories.map(category => (
+                <Option key={category.id} value={category.id}>{category.title}</Option>
+              ))}
+            </Select>
+          </div>
+        </form>
+      </Modal>
 
       <div className="mt-8">
         <h3 className="text-lg font-bold mb-4">Existing Categories</h3>
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {existingCategories.map(category => (
-              <tr key={category.id}>
-                <td className="px-6 py-4 whitespace-nowrap max-w-2xl">{category.title}</td>
-                <td className="px-6 py-4 whitespace-nowrap max-w-2xl overflow-hidden">{category.description}</td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <button
-                    className="text-indigo-600 hover:text-indigo-900"
-                    onClick={() => handleEdit(category)}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className="ml-2 text-red-600 hover:text-red-900"
-                    onClick={() => handleDelete(category.id)}
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <Table
+          columns={columns}
+          dataSource={paginatedCategories}
+          pagination={false}
+          rowKey="id"
+        />
+        <Pagination
+          current={currentPage}
+          pageSize={pageSize}
+          total={existingCategories.length}
+          onChange={handlePaginationChange}
+          className="mt-4"
+        />
       </div>
     </div>
   );
