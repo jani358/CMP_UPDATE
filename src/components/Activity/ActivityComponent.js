@@ -1,87 +1,97 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const ActivityComponent = () => {
-  const [activities, setActivities] = useState([]);
-  const [newTitle, setNewTitle] = useState('');
-  const [newAnswers, setNewAnswers] = useState([]);
-  const [newTutorialId, setNewTutorialId] = useState('');
+const CreateActivity = () => {
+  const [formData, setFormData] = useState({
+    title: '',
+    answers: [],
+    tutorialId: ''
+  });
+  const [tutorials, setTutorials] = useState([]);
 
   useEffect(() => {
-    fetchActivities();
+    fetchTutorials();
   }, []);
 
-  const fetchActivities = async () => {
+  const fetchTutorials = async () => {
     try {
-      const response = await axios.get('http://localhost:3002/activity');
-      setActivities(response.data);
+      const response = await axios.get('http://localhost:3002/tutorial');
+      setTutorials(response.data);
     } catch (error) {
-      console.error('Error fetching activities:', error);
+      console.error('Error fetching tutorials:', error);
     }
   };
 
-  const handleUpdateTitle = async (activityId) => {
-    try {
-      await axios.put(`http://localhost:3002/activity/${activityId}`, { title: newTitle });
-      fetchActivities();
-      setNewTitle('');
-    } catch (error) {
-      console.error('Error updating title:', error);
+  const handleChange = (e) => {
+    if (e.target.name === 'answers') {
+      // Split answers into an array based on newline or comma separators
+      const answersArray = e.target.value.split(/[\n,]+/);
+      setFormData({ ...formData, answers: answersArray });
+    } else {
+      setFormData({ ...formData, [e.target.name]: e.target.value });
     }
   };
 
-  const handleUpdateAnswers = async (activityId) => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     try {
-      await axios.put(`http://localhost:3002/activity/${activityId}`, { answers: newAnswers });
-      fetchActivities();
-      setNewAnswers([]);
+      const activityData = {
+        title: formData.title,
+        answers: formData.answers,
+        tutorialId: formData.tutorialId
+      };
+      const response = await axios.post('http://localhost:3002/activity', activityData);
+      console.log('Activity created successfully:', response.data);
+      setFormData({ title: '', answers: [], tutorialId: '' });
     } catch (error) {
-      console.error('Error updating answers:', error);
-    }
-  };
-
-  const handleUpdateTutorialId = async (activityId) => {
-    try {
-      await axios.put(`http://localhost:3002/activity/${activityId}`, { tutorial: newTutorialId });
-      fetchActivities();
-      setNewTutorialId('');
-    } catch (error) {
-      console.error('Error updating tutorial ID:', error);
+      console.error('Error creating activity:', error);
     }
   };
 
   return (
     <div>
-      <h2 className="text-xl font-bold mb-4">Activities</h2>
-      {activities.length > 0 ? (
-        <ul>
-          {activities.map(activity => (
-            <li key={activity.id} className="border border-gray-500 rounded-lg p-4 mb-4">
-              <h3 className="text-lg font-semibold mb-2">{activity.title}</h3>
-              <ul>
-                {activity.answers.map((answer, index) => (
-                  <li key={index} className="text-sm">{answer}</li>
-                ))}
-              </ul>
-              <div className="flex items-center mt-4">
-                <input
-                  type="text"
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="Enter new title"
-                  className="border border-gray-400 rounded-md p-2 mr-2"
-                />
-                <button onClick={() => handleUpdateTitle(activity.id)} className="bg-blue-500 text-white px-4 py-2 rounded-md">Update Title</button>
-              </div>
-              {/* Similar input/button combinations for answers and tutorial ID */}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>No activities available</p>
-      )}
+      <h2 className="text-xl font-bold mb-4">Create Activity</h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block">Title:</label>
+          <input
+            type="text"
+            name="title"
+            value={formData.title}
+            onChange={handleChange}
+            className="border border-gray-400 rounded-md p-2 w-full"
+            required
+          />
+        </div>
+        <div>
+          <label className="block">Answers (comma or newline separated):</label>
+          <textarea
+            name="answers"
+            value={formData.answers.join(', ')} // Join answers for display
+            onChange={handleChange}
+            className="border border-gray-400 rounded-md p-2 w-full"
+            required
+          />
+        </div>
+        <div>
+          <label className="block">Tutorial:</label>
+          <select
+            name="tutorialId"
+            value={formData.tutorialId}
+            onChange={handleChange}
+            className="border border-gray-400 rounded-md p-2 w-full"
+            required
+          >
+            <option value="">Select Tutorial</option>
+            {tutorials.map(tutorial => (
+              <option key={tutorial.id} value={tutorial.id}>{tutorial.title}</option>
+            ))}
+          </select>
+        </div>
+        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md">Create Activity</button>
+      </form>
     </div>
   );
 };
 
-export default ActivityComponent;
+export default CreateActivity;
